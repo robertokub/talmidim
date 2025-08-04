@@ -1,0 +1,6 @@
+{
+  "name": "Copy of Trilha de Aprendizagem Interativa",
+  "description": "Um aplicativo para acompanhar o progresso das aulas, permitindo que os alunos marquem as aulas como concluídas, visualizem o material e deixem comentários. O progresso é salvo localmente no navegador.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
