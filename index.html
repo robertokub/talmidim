@@ -1,40 +1,48 @@
+// Importe as coisas do React e o 'db' do nosso arquivo de configuração
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom/client';
+import { db } from './firebase'; // <-- IMPORTANTE: Importando nosso banco de dados
+import { collection, getDocs } from "firebase/firestore"; // <-- Funções para ler dados
 
-<!DOCTYPE html>
-<html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trilha de Aprendizagem Interativa</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      /* Custom scrollbar for a better look */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #1f2937; /* bg-gray-800 */
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #4b5563; /* bg-gray-600 */
-        border-radius: 10px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #6b7280; /* bg-gray-500 */
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
-    "react/": "https://esm.sh/react@^19.1.1/",
-    "react": "https://esm.sh/react@^19.1.1"
-  }
+// Componente principal do seu aplicativo
+function App() {
+  // Um estado para guardar os módulos da trilha que vêm do banco de dados
+  const [modules, setModules] = useState([]);
+
+  // useEffect é um hook do React que roda quando o componente carrega
+  useEffect(() => {
+    // Função assíncrona para buscar os dados
+    const fetchModules = async () => {
+      const modulesCollection = collection(db, 'modulos'); // Referência à coleção "modulos"
+      const modulesSnapshot = await getDocs(modulesCollection);
+      const modulesList = modulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setModules(modulesList);
+      console.log("Dados carregados do Firebase:", modulesList);
+    };
+
+    fetchModules(); // Chama a função
+  }, []); // O array vazio [] faz com que isso rode apenas uma vez
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-4xl font-bold text-center mb-8">Trilha de Aprendizagem</h1>
+      {/* Aqui você pode mapear os módulos e exibi-los */}
+      <div>
+        {modules.map(module => (
+          <div key={module.id} className="bg-gray-800 p-4 rounded-lg mb-4">
+            <h2 className="text-2xl text-cyan-400">{module.title}</h2>
+            <p>{module.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
-  <body class="bg-gray-900 text-white">
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
-</html>
+
+// Renderiza o componente App na div #root do seu HTML
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
