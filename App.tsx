@@ -1,7 +1,7 @@
-
-import React, { useState, useMemo } from 'react';
+// Importações do React e dos seus componentes
+import React, { useState, useEffect, useMemo } from 'react';
 import { studentNames } from './data/students';
-import { classList } from './data/classes';
+// import { classList } from './data/classes'; // <-- REMOVEMOS ISSO, VAI VIR DO FIREBASE
 import { useStudentProgress } from './hooks/useStudentProgress';
 
 import Header from './components/Header';
@@ -10,10 +10,46 @@ import ProgressBar from './components/ProgressBar';
 import ClassList from './components/ClassList';
 import Ranking from './components/Ranking';
 
+// ===== IMPORTAÇÕES DO FIREBASE =====
+import { db } from './firebase'; // Importa a conexão com o banco de dados
+import { collection, getDocs, orderBy, query } from "firebase/firestore"; // Funções para buscar os dados
+
+// Definindo o tipo de uma aula para o TypeScript entender
+interface ClassData {
+  id: string;
+  title: string;
+  description: string;
+  videoUrl?: string;
+  pdfUrl?: string;
+  order: number; // Adicionamos um campo para ordenar as aulas
+}
+
 const App: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<string>(studentNames[0]);
   const { appData, trackVideoWatch, trackPdfRead, addComment } = useStudentProgress();
 
+  // ===== AQUI VAMOS GUARDAR OS DADOS VINDOS DO FIREBASE =====
+  const [classList, setClassList] = useState<ClassData[]>([]);
+
+  // ===== ESTE BLOCO BUSCA OS DADOS DO FIREBASE QUANDO O APP CARREGA =====
+  useEffect(() => {
+    const fetchClasses = async () => {
+      // Cria uma consulta na coleção 'aulas' e ordena pelo campo 'order'
+      const q = query(collection(db, "aulas"), orderBy("order"));
+      const classesSnapshot = await getDocs(q);
+      const classesData = classesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ClassData[];
+      
+      setClassList(classesData); // Guarda a lista de aulas no estado do React
+      console.log("Aulas carregadas do Firebase:", classesData);
+    };
+
+    fetchClasses();
+  }, []); // O [] vazio faz isso rodar apenas uma vez
+
+  // O resto do seu código continua igual, usando a 'classList' que agora vem do Firebase
   const handleSelectStudent = (student: string) => {
     setSelectedStudent(student);
   };
@@ -36,9 +72,8 @@ const App: React.FC = () => {
   };
 
   const totalCourseActions = useMemo(() => {
-    // 2 ações (vídeo, comentário) + 1 se o PDF existir
     return classList.reduce((total, lesson) => total + 2 + (lesson.pdfUrl ? 1 : 0), 0);
-  }, []);
+  }, [classList]); // Adicionamos classList como dependência
 
   const completedActions = useMemo(() => {
     if (!currentStudentProgress) return 0;
